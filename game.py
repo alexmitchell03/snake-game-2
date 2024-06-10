@@ -8,7 +8,7 @@ WIDTH = 640
 HEIGHT = 480
 BLOCK_SIZE = 20
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Snake Game")
+pygame.display.set_caption("Snake Game 2")
 
 # colors
 WHITE = (255, 255, 255)
@@ -104,10 +104,13 @@ def game_loop():
 			print("Collision detected! Game over.")
 			running = False
 
-		# draws game
+		# draw game
 		screen.fill(BLACK)
 		for segment in snake["body"]:
-			pygame.draw.rect(screen, GREEN, (*segment, BLOCK_SIZE, BLOCK_SIZE))
+			# draw outline
+			pygame.draw.rect(screen, BLACK, (segment[0] - 2, segment[1] - 2, BLOCK_SIZE + 4, BLOCK_SIZE + 4))
+			# draw snake segment
+			pygame.draw.rect(screen, GREEN, (segment[0], segment[1], BLOCK_SIZE, BLOCK_SIZE))
 		pygame.draw.rect(screen, RED, (*apple, BLOCK_SIZE, BLOCK_SIZE))
 
 		# updates full display surface to screen, showing the new frame
