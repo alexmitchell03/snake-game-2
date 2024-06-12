@@ -4,9 +4,12 @@ import random
 pygame.init()
 
 # screen dimensions
-WIDTH = 640
-HEIGHT = 480
+GAME_WIDTH = 640
+GAME_HEIGHT = 480
+SCORE_WIDTH = 200
 BLOCK_SIZE = 20
+WIDTH = GAME_WIDTH + SCORE_WIDTH
+HEIGHT = GAME_HEIGHT
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Snake Game 2")
 
@@ -15,6 +18,7 @@ WHITE = (255, 255, 255)
 GREEN = (0, 255, 0)
 RED = (255, 0, 0)
 BLACK = (0, 0, 0)
+SCORE_BG = (50, 50, 50)
 
 clock = pygame.time.Clock()
 font = pygame.font.SysFont(None, 35)
@@ -22,16 +26,24 @@ font = pygame.font.SysFont(None, 35)
 def initialize_snake():
 	snake = {
 		# initial position center of screen
-		"body": [(WIDTH // 2, HEIGHT // 2)],
+		"body": [(GAME_WIDTH // 2, GAME_HEIGHT // 2)],
 		# initial direction is right
 		"direction": pygame.K_RIGHT,
 		"new_direction": pygame.K_RIGHT
 	}
 	return snake
 
-def new_apple_position():
-	return (random.randint(0, (WIDTH // BLOCK_SIZE) - 1) * BLOCK_SIZE, 
-					random.randint(0, (HEIGHT // BLOCK_SIZE) - 1) * BLOCK_SIZE)
+def new_apple_position(snake):
+	# search for new apple position
+	# makes sure new apple is not on body of snake
+	all_positions = [(x * BLOCK_SIZE, y * BLOCK_SIZE) for x in range(GAME_WIDTH // BLOCK_SIZE) for y in range(GAME_HEIGHT // BLOCK_SIZE)]
+	free_positions = [pos for pos in all_positions if pos not in snake["body"]]
+    
+	if not free_positions:
+		# possibly do something if no space on screen for apple
+		return None
+    
+	return random.choice(free_positions)
 
 def move_snake(snake):
 	head_x, head_y = snake["body"][0]
@@ -66,15 +78,16 @@ def check_collision(snake):
 	# returns True if collision is detected
 	head = snake["body"][0]
 	# if snake head hits window edge or collides with itself, end game
-	if (head[0] < 0 or head[0] >= WIDTH or 
-		head[1] < 0 or head[1] >= HEIGHT or 
+	if (head[0] < 0 or head[0] >= GAME_WIDTH or 
+		head[1] < 0 or head[1] >= GAME_HEIGHT or 
 		head in snake["body"][1:]):
 			return True
 	return False
 
 def game_loop():
 	snake = initialize_snake()
-	apple = new_apple_position()
+	apple = new_apple_position(snake)
+	score = 0
 	running = True
 
 	while running:
@@ -97,8 +110,13 @@ def game_loop():
 		# if snake head is at the same position as an apple
 		if snake["body"][0] == apple:
 			grow_snake(snake)
-			apple = new_apple_position()
-			print("Apple eaten! New position:", apple)
+			apple = new_apple_position(snake)
+			if apple is None:
+				print("Congratulations! You have filled the screen with the snake!")
+				running = False
+			else:
+				score += 1
+				print("Apple eaten. New position:", apple)
 
 		if check_collision(snake):
 			print("Collision detected! Game over.")
@@ -111,7 +129,15 @@ def game_loop():
 			pygame.draw.rect(screen, BLACK, (segment[0] - 2, segment[1] - 2, BLOCK_SIZE + 4, BLOCK_SIZE + 4))
 			# draw snake segment
 			pygame.draw.rect(screen, GREEN, (segment[0], segment[1], BLOCK_SIZE, BLOCK_SIZE))
-		pygame.draw.rect(screen, RED, (*apple, BLOCK_SIZE, BLOCK_SIZE))
+		if apple:
+			pygame.draw.rect(screen, RED, (*apple, BLOCK_SIZE, BLOCK_SIZE))
+
+		pygame.draw.rect(screen, SCORE_BG, (GAME_WIDTH, 0, SCORE_WIDTH, HEIGHT))
+
+		score_text = font.render(f"Score: {score}", True, WHITE)
+		# possibly change to GAME_WIDTH + 20
+		screen.blit(score_text, (GAME_WIDTH + 50, 20))
+
 
 		# updates full display surface to screen, showing the new frame
 		pygame.display.flip()
